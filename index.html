@@ -35,9 +35,8 @@
     <div class="field">
       <span class="field__label">카드 크기</span>
       <div class="chips" role="radiogroup" aria-label="카드 크기">
-        <button class="chip" type="button" data-w="1080" data-h="1080">1080 × 1080</button>
-        <button class="chip is-on" type="button" data-w="1080" data-h="1350">1080 × 1350</button>
-        <button class="chip" type="button" data-w="1080" data-h="1920">1080 × 1920</button>
+        <button class="chip is-on" type="button" data-w="1080" data-h="1920">쇼츠 1080 × 1920</button>
+        <button class="chip" type="button" data-w="1080" data-h="1080">정사각 1080 × 1080</button>
       </div>
     </div>
 
@@ -65,8 +64,8 @@
   <!-- ===== 오른쪽: 카드 미리보기 ===== -->
   <section class="preview" aria-label="카드 미리보기">
     <div id="stageBox" class="stage-box">
-      <!-- 이 안의 카드는 항상 실제 크기(1080px)로 그려지고, 화면에서만 축소되어 보입니다 -->
-      <div id="card" class="card" data-theme="clear">
+      <!-- 카드는 항상 실제 크기(1080px)로 그려지고, 화면에서만 통째로 축소되어 보입니다 -->
+      <div id="card" class="card" data-theme="clear" data-size="shorts">
 
         <!-- 오늘 카드 -->
         <div id="viewToday" class="view">
@@ -77,11 +76,18 @@
 
           <div class="hero">
             <div class="hero__icon" id="tIcon"></div>
+
             <div class="hero__temp">
               <span id="tTemp">--</span><span class="hero__deg">°</span>
             </div>
-            <p class="hero__desc" id="tDesc">-</p>
-            <p class="hero__range" id="tRange">-</p>
+
+            <div class="range">
+              <span class="range__item"><i>최저</i><b id="tMin">-</b></span>
+              <span class="range__gap"></span>
+              <span class="range__item"><i>최고</i><b id="tMax">-</b></span>
+            </div>
+
+            <p class="hero__msg" id="tMsg">-</p>
           </div>
 
           <div class="metrics">
@@ -101,7 +107,11 @@
             <p class="card__date" id="wDate">-</p>
           </div>
 
-          <h2 class="week__title">이번 주 날씨</h2>
+          <div class="week__top">
+            <h2 class="week__title">이번 주 날씨</h2>
+            <span class="week__legend"><i>최저</i> / <b>최고</b></span>
+          </div>
+
           <ul class="week" id="weekList"></ul>
 
           <p class="card__sign" id="wSign">@alwaysg00d</p>

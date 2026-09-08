@@ -205,29 +205,33 @@ a{ color: var(--accent); }
   font-size: 12px;
   color: #5C6478;
 }
-
 /* =========================================================
    3. 카드 미리보기 영역
+   카드는 실제 1080px 크기로 그려지되, 화면에서는
+   가로·세로 모두 들어오도록 축소해서 통째로 보여줍니다.
    ========================================================= */
-.preview{ overflow: hidden; }
+.preview{
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
 
 .stage-box{
-  /* 축소된 카드가 차지할 자리. 높이는 자바스크립트가 계산합니다 */
+  /* 축소된 카드가 차지할 자리. 크기는 자바스크립트가 계산합니다 */
   position: relative;
-  width: 100%;
+  flex: 0 0 auto;
 }
 
 /* =========================================================
    4. 카드 본체 — 여기가 실제 이미지로 저장되는 부분입니다
-   크기는 항상 1080px 기준이고, 화면에서만 축소해서 보여줍니다
+   크기별 치수는 CSS 변수로 모아두고 아래 규칙들이 가져다 씁니다
    ========================================================= */
 .card{
   position: absolute;
   top: 0;
   left: 0;
   width: 1080px;
-  height: 1350px;
-  padding: 96px 88px;
+  height: 1920px;
   transform-origin: top left;
   display: flex;
   flex-direction: column;
@@ -235,6 +239,46 @@ a{ color: var(--accent); }
   color: #F2F5F8;
   background: #12161F;
   border-radius: 8px;
+
+  /* ---- 쇼츠(1080×1920) 기준 치수 ---- */
+  --pad-x:     88px;
+  --pad-y:     96px;
+  --f-place:   52px;
+  --f-date:    28px;
+  --icon:     220px;
+  --f-temp:   300px;
+  --f-deg:    120px;
+  --f-range:   40px;
+  --f-msg:     50px;
+  --f-mk:      26px;
+  --f-mv:      44px;
+  --f-sign:    26px;
+  --f-wtitle:  62px;
+  --f-day:     40px;
+  --icon-day:  68px;
+  --day-pad:   26px;
+
+  padding: var(--pad-y) var(--pad-x);
+}
+
+/* ---- 정사각(1080×1080)은 세로 여유가 없어 전체적으로 작게 ---- */
+.card[data-size="square"]{
+  --pad-x:     72px;
+  --pad-y:     66px;
+  --f-place:   44px;
+  --f-date:    24px;
+  --icon:     132px;
+  --f-temp:   190px;
+  --f-deg:     80px;
+  --f-range:   30px;
+  --f-msg:     36px;
+  --f-mk:      21px;
+  --f-mv:      34px;
+  --f-sign:    21px;
+  --f-wtitle:  44px;
+  --f-day:     30px;
+  --icon-day:  46px;
+  --day-pad:    8px;
 }
 
 /* ---- 날씨별 색 테마 ---- */
@@ -275,8 +319,10 @@ a{ color: var(--accent); }
   height: 100%;
   width: 100%;
 }
+/* 숨긴 쪽 카드가 같이 그려지지 않도록 (display:flex 가 hidden 을 덮어쓰기 때문) */
+.view[hidden]{ display: none; }
 
-/* ---- 카드 머리말 ---- */
+/* ---- 카드 머리말: 위치 + 날짜 ---- */
 .card__head{
   display: flex;
   align-items: baseline;
@@ -286,18 +332,20 @@ a{ color: var(--accent); }
 }
 .card__place{
   margin: 0;
-  font-size: 46px;
+  font-size: var(--f-place);
   font-weight: 700;
   letter-spacing: -0.03em;
 }
 .card__date{
   margin: 0;
-  font-size: 26px;
+  font-size: var(--f-date);
   font-weight: 500;
   color: rgba(255,255,255,0.62);
 }
 
-/* ---- 오늘 카드: 중앙 히어로 ---- */
+/* =========================================================
+   5. 오늘 카드
+   ========================================================= */
 .hero{
   flex: 1;
   display: flex;
@@ -306,8 +354,8 @@ a{ color: var(--accent); }
   justify-content: center;
 }
 .hero__icon{
-  width: 190px;
-  height: 190px;
+  width: var(--icon);
+  height: var(--icon);
   margin-bottom: 26px;
 }
 .hero__icon svg{ width: 100%; height: 100%; display: block; }
@@ -315,32 +363,49 @@ a{ color: var(--accent); }
 .hero__temp{
   display: flex;
   align-items: flex-start;
-  font-size: 250px;
+  font-size: var(--f-temp);
   font-weight: 800;
   line-height: 0.86;
   letter-spacing: -0.055em;
 }
 .hero__deg{
-  font-size: 110px;
+  font-size: var(--f-deg);
   font-weight: 500;
   line-height: 1;
   margin-left: 6px;
   color: rgba(255,255,255,0.55);
 }
-.hero__desc{
-  margin: 30px 0 0;
-  font-size: 54px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+
+/* ---- 최저 / 최고 ---- */
+.range{
+  display: flex;
+  align-items: baseline;
+  margin-top: 30px;
+  font-size: var(--f-range);
 }
-.hero__range{
-  margin: 14px 0 0;
-  font-size: 32px;
+.range__item{
+  display: inline-flex;
+  align-items: baseline;
+}
+.range__item i{
+  font-style: normal;
   font-weight: 500;
-  color: rgba(255,255,255,0.66);
+  color: rgba(255,255,255,0.55);
+  margin-right: 0.4em;
+}
+.range__item b{ font-weight: 700; }
+.range__gap{ width: 1.1em; }
+
+/* ---- 한 줄 문구: "대체로 맑음 · 얇은 긴 외투 챙기세용" ---- */
+.hero__msg{
+  margin: 30px 0 0;
+  font-size: var(--f-msg);
+  font-weight: 600;
+  line-height: 1.32;
+  letter-spacing: -0.025em;
 }
 
-/* ---- 오늘 카드: 하단 지표 4개 ---- */
+/* ---- 하단 지표 4개 ---- */
 .metrics{
   display: flex;
   padding-top: 34px;
@@ -349,13 +414,13 @@ a{ color: var(--accent); }
 .metric{ flex: 1; }
 .metric__k{
   margin: 0 0 12px;
-  font-size: 24px;
+  font-size: var(--f-mk);
   font-weight: 500;
   color: rgba(255,255,255,0.55);
 }
 .metric__v{
   margin: 0;
-  font-size: 40px;
+  font-size: var(--f-mv);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -363,18 +428,34 @@ a{ color: var(--accent); }
 /* ---- 서명 ---- */
 .card__sign{
   margin: 34px 0 0;
-  font-size: 24px;
+  font-size: var(--f-sign);
   font-weight: 600;
   color: rgba(255,255,255,0.42);
 }
 
-/* ---- 주간 카드 ---- */
+/* =========================================================
+   6. 주간 카드 — 월~일 7줄
+   ========================================================= */
+.week__top{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 44px 0 22px;
+}
 .week__title{
-  margin: 44px 0 30px;
-  font-size: 58px;
+  margin: 0;
+  font-size: var(--f-wtitle);
   font-weight: 700;
   letter-spacing: -0.03em;
 }
+.week__legend{
+  font-size: calc(var(--f-day) * 0.7);
+  font-weight: 500;
+  color: rgba(255,255,255,0.42);
+}
+.week__legend i{ font-style: normal; }
+.week__legend b{ color: rgba(255,255,255,0.75); font-weight: 700; }
+
 .week{
   flex: 1;
   list-style: none;
@@ -387,54 +468,52 @@ a{ color: var(--accent); }
 .day{
   display: flex;
   align-items: center;
-  padding: 20px 0;
+  padding: var(--day-pad) 0;
   border-bottom: 1px solid rgba(255,255,255,0.12);
 }
 .day:last-child{ border-bottom: none; }
 
-.day.is-today .day__name{ color: #FFFFFF; font-weight: 700; }
+/* 이미 지나간 요일은 흐리게, 오늘은 또렷하게 */
+.day.is-past{ opacity: 0.5; }
+.day.is-today .day__dow,
+.day.is-today .day__date{ color: #FFFFFF; font-weight: 700; }
 
-.day__name{
-  width: 128px;
+.day__dow{
+  width: 2em;
   flex-shrink: 0;
-  font-size: 34px;
+  font-size: var(--f-day);
+  font-weight: 600;
+  color: rgba(255,255,255,0.82);
+}
+.day__date{
+  flex: 1;
+  font-size: calc(var(--f-day) * 0.8);
   font-weight: 500;
-  color: rgba(255,255,255,0.72);
+  color: rgba(255,255,255,0.5);
 }
 .day__icon{
-  width: 62px;
-  height: 62px;
+  width: var(--icon-day);
+  height: var(--icon-day);
   flex-shrink: 0;
-  margin-right: 26px;
+  margin-right: calc(var(--f-day) * 0.6);
 }
 .day__icon svg{ width: 100%; height: 100%; display: block; }
 
-.day__bar{
-  flex: 1;
-  position: relative;
-  height: 12px;
-  margin: 0 26px;
-  background: rgba(255,255,255,0.14);
-  border-radius: 999px;
-}
-.day__fill{
-  position: absolute;
-  top: 0;
-  height: 12px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #6FB6E8 0%, #F2B03D 100%);
-}
 .day__temp{
-  width: 190px;
+  width: 6.2em;
   flex-shrink: 0;
   text-align: right;
-  font-size: 34px;
+  font-size: var(--f-day);
   font-weight: 600;
   letter-spacing: -0.02em;
 }
-.day__temp b{ font-weight: 800; }
 .day__temp i{
   font-style: normal;
-  color: rgba(255,255,255,0.5);
   font-weight: 500;
+  color: rgba(255,255,255,0.5);
 }
+.day__temp .day__slash{
+  color: rgba(255,255,255,0.26);
+  margin: 0 0.3em;
+}
+.day__temp b{ font-weight: 800; }

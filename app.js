@@ -28,7 +28,7 @@ const viewWeek    = $('viewWeek');
    --------------------------------------------------------- */
 let place = { name: '서울', lat: 37.5665, lon: 126.9780 }; // 기본값: 서울
 let cardW = 1080;
-let cardH = 1350;
+let cardH = 1920;       // 기본은 쇼츠 크기
 let currentType = null; // 'today' 또는 'week'
 
 /* ---------------------------------------------------------
@@ -108,39 +108,82 @@ function icon(name, size){
    4. 작은 도우미 함수들
    --------------------------------------------------------- */
 const round = (n) => Math.round(n);
+const DOW = ['일','월','화','수','목','금','토'];
 
-// 2026-09-08 → "9월 8일 (화)"
+// '2026-09-08' → Date 객체 (시간대 문제를 피하려고 자정으로 고정)
+const toDate = (iso) => new Date(iso + 'T00:00:00');
+
+// '2026-09-08' → "9월 8일 (화)"
 function formatDate(iso){
-  const d = new Date(iso + 'T00:00:00');
-  const days = ['일','월','화','수','목','금','토'];
-  return `${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+  const d = toDate(iso);
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`;
 }
 
-function dayName(iso, index){
-  if (index === 0) return '오늘';
-  const d = new Date(iso + 'T00:00:00');
-  const days = ['일','월','화','수','목','금','토'];
-  return `${d.getMonth() + 1}.${d.getDate()} ${days[d.getDay()]}`;
+// '2026-09-08' → "9.8"
+function shortDate(iso){
+  const d = toDate(iso);
+  return `${d.getMonth() + 1}.${d.getDate()}`;
+}
+
+// '2026-09-08' → "화"
+function dowName(iso){
+  return DOW[toDate(iso).getDay()];
 }
 
 function setStatus(text){ statusEl.textContent = text; }
 
 /* ---------------------------------------------------------
-   5. 미리보기 크기 맞추기
-   카드는 실제 1080px 크기지만 화면에는 작게 줄여서 보여줍니다.
+   5. 오늘 카드에 넣을 한 줄 문구
+   비가 올 확률이 높으면 우산 이야기를, 아니면 체감온도에 맞는
+   옷차림을 알려줍니다.
+   --------------------------------------------------------- */
+function adviceLine(feels, pop){
+  if (pop >= 60) return '우산 꼭 챙기세용';
+
+  if (feels >= 28) return '반팔에 시원하게 입으세용';
+  if (feels >= 23) return '반팔·얇은 셔츠 딱 좋아용';
+  if (feels >= 20) return '얇은 가디건 하나 챙기세용';
+  if (feels >= 17) return '얇은 긴 외투 챙기세용';
+  if (feels >= 12) return '자켓이나 니트 걸치세용';
+  if (feels >=  9) return '코트 꺼낼 때가 됐어용';
+  if (feels >=  5) return '두꺼운 코트에 목도리까지용';
+  return '패딩에 장갑까지 꽁꽁 싸매세용';
+}
+
+/* ---------------------------------------------------------
+   6. 미리보기 크기 맞추기
+   카드는 실제 1080px 크기로 그리되, 화면에서는 가로·세로가
+   모두 들어오도록 줄여서 카드 전체가 한눈에 보이게 합니다.
    --------------------------------------------------------- */
 function fitPreview(){
-  const boxWidth = stageBox.clientWidth;
-  const scale = Math.min(boxWidth / cardW, 1);
-  card.style.width  = cardW + 'px';
-  card.style.height = cardH + 'px';
+  // 정사각인지 쇼츠인지 알려주면 CSS가 알맞은 글자 크기를 씁니다
+  card.dataset.size = (cardW === cardH) ? 'square' : 'shorts';
+
+  const area = stageBox.parentElement; // 오른쪽 미리보기 영역
+
+  // 높이를 잠깐 0으로 두어야 이전 카드 높이에 영향받지 않고
+  // 이 자리가 문서 위에서 몇 px 아래인지 정확히 잴 수 있습니다
+  stageBox.style.height = '0px';
+  const topOffset = stageBox.getBoundingClientRect().top + window.scrollY;
+
+  const availW = area.clientWidth;
+  // 아래쪽 여백까지 감안해서 빼야 스크롤바가 생기지 않습니다
+  const availH = Math.max(window.innerHeight - topOffset - 44, 240);
+
+  // 가로·세로 중 더 빡빡한 쪽에 맞춥니다
+  const scale = Math.min(availW / cardW, availH / cardH);
+
+  card.style.width     = cardW + 'px';
+  card.style.height    = cardH + 'px';
   card.style.transform = `scale(${scale})`;
+
+  stageBox.style.width  = (cardW * scale) + 'px';
   stageBox.style.height = (cardH * scale) + 'px';
 }
 window.addEventListener('resize', fitPreview);
 
 /* ---------------------------------------------------------
-   6. 도시 검색 (Open-Meteo Geocoding API)
+   7. 도시 검색 (Open-Meteo Geocoding API)
    --------------------------------------------------------- */
 async function searchCity(){
   const keyword = cityInput.value.trim();
@@ -183,25 +226,38 @@ async function searchCity(){
 }
 
 /* ---------------------------------------------------------
-   7. 날씨 데이터 가져오기 (Open-Meteo Forecast API)
+   8. 날씨 데이터 가져오기 (Open-Meteo Forecast API)
+   이번 주 월요일부터 일요일까지 7일을 받아옵니다.
+   이미 지나간 요일은 past_days 로 실제 관측값을 받습니다.
    --------------------------------------------------------- */
+function weekRange(){
+  const dow = (new Date().getDay() + 6) % 7; // 월=0, 화=1 … 일=6
+  return { past: dow, forecast: 7 - dow };   // 합쳐서 항상 7일
+}
+
 async function fetchWeather(){
+  const { past, forecast } = weekRange();
+
   const url = 'https://api.open-meteo.com/v1/forecast'
     + `?latitude=${place.lat}&longitude=${place.lon}`
     + '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m'
     + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'
     + '&wind_speed_unit=ms'   // 바람은 한국식 m/s 로 받기
-    + '&timezone=auto&forecast_days=7';
+    + '&timezone=auto'
+    + `&past_days=${past}&forecast_days=${forecast}`;
 
   const res = await fetch(url);
   if (!res.ok) throw new Error('날씨 API 응답 오류');
-  return res.json();
+  const data = await res.json();
+
+  // 받아온 7일 중 '오늘'이 몇 번째인지 알려줍니다 (지나간 날 개수와 같음)
+  return { data, todayIndex: past };
 }
 
 /* ---------------------------------------------------------
-   8. 오늘의 날씨 카드 그리기
+   9. 오늘의 날씨 카드 그리기
    --------------------------------------------------------- */
-function renderToday(data){
+function renderToday(data, ti){
   const now = data.current;
   const day = data.daily;
   const [label, iconName, theme] = readCode(now.weather_code);
@@ -209,14 +265,18 @@ function renderToday(data){
   card.dataset.theme = theme;
 
   $('tPlace').textContent = place.name;
-  $('tDate').textContent  = formatDate(day.time[0]);
-  $('tIcon').innerHTML    = icon(iconName, 190);
+  $('tDate').textContent  = formatDate(day.time[ti]);
+  $('tIcon').innerHTML    = icon(iconName, 220);
   $('tTemp').textContent  = round(now.temperature_2m);
-  $('tDesc').textContent  = label;
-  $('tRange').textContent = `최저 ${round(day.temperature_2m_min[0])}° · 최고 ${round(day.temperature_2m_max[0])}°`;
+
+  $('tMin').textContent   = `${round(day.temperature_2m_min[ti])}°`;
+  $('tMax').textContent   = `${round(day.temperature_2m_max[ti])}°`;
+
+  const pop = day.precipitation_probability_max[ti] ?? 0;
+  $('tMsg').textContent   = `${label} · ${adviceLine(now.apparent_temperature, pop)}`;
 
   $('tFeels').textContent = `${round(now.apparent_temperature)}°`;
-  $('tPop').textContent   = `${day.precipitation_probability_max[0] ?? 0}%`;
+  $('tPop').textContent   = `${pop}%`;
   $('tHum').textContent   = `${round(now.relative_humidity_2m)}%`;
   $('tWind').textContent  = `${round(now.wind_speed_10m)}m/s`;
 
@@ -228,44 +288,34 @@ function renderToday(data){
 }
 
 /* ---------------------------------------------------------
-   9. 주간 날씨 카드 그리기
+   10. 주간 날씨 카드 그리기 (월~일 7줄)
    --------------------------------------------------------- */
-function renderWeek(data){
+function renderWeek(data, ti){
   const day = data.daily;
 
-  // 이번 주 전체의 최저·최고를 구해서 온도 막대의 기준으로 씁니다
-  const minAll = Math.min(...day.temperature_2m_min);
-  const maxAll = Math.max(...day.temperature_2m_max);
-  const span   = Math.max(maxAll - minAll, 1); // 0으로 나누는 것 방지
-
-  // 카드 전체 색은 오늘 날씨 기준
-  card.dataset.theme = readCode(day.weather_code[0])[2];
+  // 카드 전체 색은 지금 날씨 기준
+  card.dataset.theme = readCode(data.current.weather_code)[2];
 
   $('wPlace').textContent = place.name;
-  $('wDate').textContent  = `${formatDate(day.time[0])} 기준`;
+  $('wDate').textContent  = `${formatDate(day.time[ti])} 기준`;
   $('wSign').textContent  = signInput.value;
 
   const list = $('weekList');
   list.innerHTML = '';
 
   day.time.forEach((iso, i) => {
-    const lo = day.temperature_2m_min[i];
-    const hi = day.temperature_2m_max[i];
     const [, iconName] = readCode(day.weather_code[i]);
 
-    // 막대의 시작 위치와 길이를 % 로 계산
-    const left  = ((lo - minAll) / span) * 100;
-    const width = Math.max(((hi - lo) / span) * 100, 4);
-
     const li = document.createElement('li');
-    li.className = 'day' + (i === 0 ? ' is-today' : '');
+    li.className = 'day'
+      + (i === ti ? ' is-today' : '')
+      + (i <   ti ? ' is-past'  : '');
+
     li.innerHTML = `
-      <span class="day__name">${dayName(iso, i)}</span>
-      <span class="day__icon">${icon(iconName, 62)}</span>
-      <span class="day__bar">
-        <span class="day__fill" style="left:${left}%; width:${width}%"></span>
-      </span>
-      <span class="day__temp"><i>${round(lo)}°</i> &nbsp; <b>${round(hi)}°</b></span>
+      <span class="day__dow">${dowName(iso)}</span>
+      <span class="day__date">${shortDate(iso)}</span>
+      <span class="day__icon">${icon(iconName, 68)}</span>
+      <span class="day__temp"><i>${round(day.temperature_2m_min[i])}°</i><span class="day__slash">/</span><b>${round(day.temperature_2m_max[i])}°</b></span>
     `;
     list.appendChild(li);
   });
@@ -276,16 +326,16 @@ function renderWeek(data){
 }
 
 /* ---------------------------------------------------------
-   10. 버튼을 눌렀을 때 실행되는 함수
+   11. 버튼을 눌렀을 때 실행되는 함수
    --------------------------------------------------------- */
 async function makeCard(type){
   setStatus('날씨를 가져오는 중입니다...');
   todayBtn.disabled = weekBtn.disabled = true;
 
   try{
-    const data = await fetchWeather();
-    if (type === 'today') renderToday(data);
-    else                  renderWeek(data);
+    const { data, todayIndex } = await fetchWeather();
+    if (type === 'today') renderToday(data, todayIndex);
+    else                  renderWeek(data, todayIndex);
 
     fitPreview();
     downloadBtn.disabled = false;
@@ -300,7 +350,7 @@ async function makeCard(type){
 }
 
 /* ---------------------------------------------------------
-   11. PNG로 저장하기
+   12. PNG로 저장하기
    화면에서는 카드가 축소되어 있으므로,
    이미지로 만들 때만 원래 크기(1080px)로 되돌려서 캡처합니다.
    --------------------------------------------------------- */
@@ -345,7 +395,7 @@ async function downloadPNG(){
 }
 
 /* ---------------------------------------------------------
-   12. 버튼과 함수 연결하기
+   13. 버튼과 함수 연결하기
    --------------------------------------------------------- */
 searchBtn.addEventListener('click', searchCity);
 cityInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchCity(); });
