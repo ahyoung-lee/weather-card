@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>오늘의 날씨 카드 생성기</title>
+<meta name="description" content="Open-Meteo 날씨 데이터로 오늘의 날씨 카드와 주간 날씨 카드를 만들어 PNG로 저장합니다." />
+
+<!-- 한글 폰트: Pretendard -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <h1 class="topbar__title">날씨 카드 생성기</h1>
+  <p class="topbar__sub">Open-Meteo 실시간 데이터로 만드는 인스타그램용 카드</p>
+</header>
+
+<main class="layout">
+
+  <!-- ===== 왼쪽: 설정 패널 ===== -->
+  <section class="panel" aria-label="카드 설정">
+
+    <div class="field">
+      <label class="field__label" for="cityInput">지역</label>
+      <div class="search">
+        <input id="cityInput" class="search__input" type="text" value="서울" placeholder="도시 이름을 입력하세요" autocomplete="off" />
+        <button id="searchBtn" class="search__btn" type="button">찾기</button>
+      </div>
+      <ul id="cityResults" class="results" hidden></ul>
+      <p id="placeNow" class="field__hint">선택된 지역: 서울</p>
+    </div>
+
+    <div class="field">
+      <span class="field__label">카드 크기</span>
+      <div class="chips" role="radiogroup" aria-label="카드 크기">
+        <button class="chip" type="button" data-w="1080" data-h="1080">1080 × 1080</button>
+        <button class="chip is-on" type="button" data-w="1080" data-h="1350">1080 × 1350</button>
+        <button class="chip" type="button" data-w="1080" data-h="1920">1080 × 1920</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="signInput">카드에 넣을 계정명</label>
+      <input id="signInput" class="search__input" type="text" value="@alwaysg00d" />
+    </div>
+
+    <div class="actions">
+      <button id="todayBtn" class="btn btn--primary" type="button">오늘의 날씨 카드 만들기</button>
+      <button id="weekBtn" class="btn" type="button">주간 날씨 카드 만들기</button>
+    </div>
+
+    <button id="downloadBtn" class="btn btn--ghost" type="button" disabled>PNG로 저장하기</button>
+
+    <p id="status" class="status" role="status">지역을 고르고 위쪽 버튼을 눌러 주세요.</p>
+
+    <footer class="credit">
+      날씨 데이터 제공:
+      <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>
+      (CC BY 4.0)
+    </footer>
+  </section>
+
+  <!-- ===== 오른쪽: 카드 미리보기 ===== -->
+  <section class="preview" aria-label="카드 미리보기">
+    <div id="stageBox" class="stage-box">
+      <!-- 이 안의 카드는 항상 실제 크기(1080px)로 그려지고, 화면에서만 축소되어 보입니다 -->
+      <div id="card" class="card" data-theme="clear">
+
+        <!-- 오늘 카드 -->
+        <div id="viewToday" class="view">
+          <div class="card__head">
+            <p class="card__place" id="tPlace">서울</p>
+            <p class="card__date" id="tDate">-</p>
+          </div>
+
+          <div class="hero">
+            <div class="hero__icon" id="tIcon"></div>
+            <div class="hero__temp">
+              <span id="tTemp">--</span><span class="hero__deg">°</span>
+            </div>
+            <p class="hero__desc" id="tDesc">-</p>
+            <p class="hero__range" id="tRange">-</p>
+          </div>
+
+          <div class="metrics">
+            <div class="metric"><p class="metric__k">체감</p><p class="metric__v" id="tFeels">-</p></div>
+            <div class="metric"><p class="metric__k">강수확률</p><p class="metric__v" id="tPop">-</p></div>
+            <div class="metric"><p class="metric__k">습도</p><p class="metric__v" id="tHum">-</p></div>
+            <div class="metric"><p class="metric__k">바람</p><p class="metric__v" id="tWind">-</p></div>
+          </div>
+
+          <p class="card__sign" id="tSign">@alwaysg00d</p>
+        </div>
+
+        <!-- 주간 카드 -->
+        <div id="viewWeek" class="view" hidden>
+          <div class="card__head">
+            <p class="card__place" id="wPlace">서울</p>
+            <p class="card__date" id="wDate">-</p>
+          </div>
+
+          <h2 class="week__title">이번 주 날씨</h2>
+          <ul class="week" id="weekList"></ul>
+
+          <p class="card__sign" id="wSign">@alwaysg00d</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- 화면의 카드(HTML)를 이미지로 바꿔주는 라이브러리 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,440 @@
+/* =========================================================
+   1. 사이트 기본 설정
+   ========================================================= */
+:root{
+  --ink:      #E8EAF0;   /* 기본 글자색 */
+  --ink-dim:  #8B93A7;   /* 흐린 글자색 */
+  --bg:       #0B0D12;   /* 페이지 배경 */
+  --surface:  #14171F;   /* 패널 배경 */
+  --line:     #262B37;   /* 경계선 */
+  --accent:   #7DE2C3;   /* 포인트 색 */
+}
+
+*{ box-sizing: border-box; }
+
+html, body{
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a{ color: var(--accent); }
+
+/* ---- 상단 헤더 ---- */
+.topbar{
+  padding: 40px 32px 28px;
+  border-bottom: 1px solid var(--line);
+}
+.topbar__title{
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.topbar__sub{
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--ink-dim);
+}
+
+/* ---- 전체 2단 레이아웃 ---- */
+.layout{
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  align-items: start;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+@media (max-width: 900px){
+  .layout{ grid-template-columns: 1fr; padding: 20px; }
+}
+
+/* =========================================================
+   2. 왼쪽 설정 패널
+   ========================================================= */
+.panel{
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  margin-right: 32px;
+}
+@media (max-width: 900px){
+  .panel{ margin: 0 0 24px; }
+}
+
+.field{ margin-bottom: 24px; }
+
+.field__label{
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-dim);
+}
+
+.field__hint{
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.search{ display: flex; }
+
+.search__input{
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  background: #0E1118;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.search__input:focus{
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.search__btn{
+  margin-left: 8px;
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  background: #222736;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.search__btn:hover{ background: #2C3242; }
+
+/* 도시 검색 결과 목록 */
+.results{
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 6px;
+  background: #0E1118;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.results li{
+  padding: 10px 12px;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.results li:hover{ background: #1D2230; }
+.results li span{ color: var(--ink-dim); font-size: 12px; }
+
+/* 크기 선택 칩 */
+.chips{ display: flex; flex-wrap: wrap; }
+.chip{
+  margin: 0 8px 8px 0;
+  padding: 9px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.chip.is-on{
+  color: #0B0D12;
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+/* 버튼 */
+.actions{ margin-bottom: 12px; }
+
+.btn{
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 15px 18px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  background: #222736;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.btn:hover{ background: #2C3242; }
+
+.btn--primary{
+  color: #0B0D12;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.btn--primary:hover{ background: #96EED4; }
+
+.btn--ghost{
+  background: transparent;
+  color: var(--accent);
+  border: 1px dashed #38404F;
+}
+.btn--ghost:disabled{
+  color: #4A5262;
+  border-color: #262B37;
+  cursor: not-allowed;
+}
+
+.status{
+  margin: 16px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+
+.credit{
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: #5C6478;
+}
+
+/* =========================================================
+   3. 카드 미리보기 영역
+   ========================================================= */
+.preview{ overflow: hidden; }
+
+.stage-box{
+  /* 축소된 카드가 차지할 자리. 높이는 자바스크립트가 계산합니다 */
+  position: relative;
+  width: 100%;
+}
+
+/* =========================================================
+   4. 카드 본체 — 여기가 실제 이미지로 저장되는 부분입니다
+   크기는 항상 1080px 기준이고, 화면에서만 축소해서 보여줍니다
+   ========================================================= */
+.card{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1350px;
+  padding: 96px 88px;
+  transform-origin: top left;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #F2F5F8;
+  background: #12161F;
+  border-radius: 8px;
+}
+
+/* ---- 날씨별 색 테마 ---- */
+.card[data-theme="clear"]{
+  background:
+    radial-gradient(900px 620px at 78% 14%, #E9A23B 0%, rgba(233,162,59,0) 62%),
+    linear-gradient(168deg, #1B2136 0%, #0D1019 100%);
+}
+.card[data-theme="cloud"]{
+  background:
+    radial-gradient(880px 600px at 74% 16%, #6E7C93 0%, rgba(110,124,147,0) 64%),
+    linear-gradient(168deg, #1D222C 0%, #0E1116 100%);
+}
+.card[data-theme="rain"]{
+  background:
+    radial-gradient(900px 640px at 76% 12%, #2F7FA8 0%, rgba(47,127,168,0) 62%),
+    linear-gradient(168deg, #131E2B 0%, #0A0E14 100%);
+}
+.card[data-theme="snow"]{
+  background:
+    radial-gradient(900px 640px at 76% 14%, #7FA9C9 0%, rgba(127,169,201,0) 64%),
+    linear-gradient(168deg, #1A2330 0%, #0C1015 100%);
+}
+.card[data-theme="storm"]{
+  background:
+    radial-gradient(880px 620px at 74% 14%, #7A5CC4 0%, rgba(122,92,196,0) 62%),
+    linear-gradient(168deg, #1A162B 0%, #0B0A12 100%);
+}
+.card[data-theme="fog"]{
+  background:
+    radial-gradient(920px 640px at 72% 18%, #7C8B90 0%, rgba(124,139,144,0) 66%),
+    linear-gradient(168deg, #1C2124 0%, #0D0F11 100%);
+}
+
+.view{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* ---- 카드 머리말 ---- */
+.card__head{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 26px;
+  border-bottom: 2px solid rgba(255,255,255,0.16);
+}
+.card__place{
+  margin: 0;
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.card__date{
+  margin: 0;
+  font-size: 26px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.62);
+}
+
+/* ---- 오늘 카드: 중앙 히어로 ---- */
+.hero{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+.hero__icon{
+  width: 190px;
+  height: 190px;
+  margin-bottom: 26px;
+}
+.hero__icon svg{ width: 100%; height: 100%; display: block; }
+
+.hero__temp{
+  display: flex;
+  align-items: flex-start;
+  font-size: 250px;
+  font-weight: 800;
+  line-height: 0.86;
+  letter-spacing: -0.055em;
+}
+.hero__deg{
+  font-size: 110px;
+  font-weight: 500;
+  line-height: 1;
+  margin-left: 6px;
+  color: rgba(255,255,255,0.55);
+}
+.hero__desc{
+  margin: 30px 0 0;
+  font-size: 54px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.hero__range{
+  margin: 14px 0 0;
+  font-size: 32px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.66);
+}
+
+/* ---- 오늘 카드: 하단 지표 4개 ---- */
+.metrics{
+  display: flex;
+  padding-top: 34px;
+  border-top: 2px solid rgba(255,255,255,0.16);
+}
+.metric{ flex: 1; }
+.metric__k{
+  margin: 0 0 12px;
+  font-size: 24px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+}
+.metric__v{
+  margin: 0;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ---- 서명 ---- */
+.card__sign{
+  margin: 34px 0 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.42);
+}
+
+/* ---- 주간 카드 ---- */
+.week__title{
+  margin: 44px 0 30px;
+  font-size: 58px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.week{
+  flex: 1;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.day{
+  display: flex;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.day:last-child{ border-bottom: none; }
+
+.day.is-today .day__name{ color: #FFFFFF; font-weight: 700; }
+
+.day__name{
+  width: 128px;
+  flex-shrink: 0;
+  font-size: 34px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.72);
+}
+.day__icon{
+  width: 62px;
+  height: 62px;
+  flex-shrink: 0;
+  margin-right: 26px;
+}
+.day__icon svg{ width: 100%; height: 100%; display: block; }
+
+.day__bar{
+  flex: 1;
+  position: relative;
+  height: 12px;
+  margin: 0 26px;
+  background: rgba(255,255,255,0.14);
+  border-radius: 999px;
+}
+.day__fill{
+  position: absolute;
+  top: 0;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6FB6E8 0%, #F2B03D 100%);
+}
+.day__temp{
+  width: 190px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.day__temp b{ font-weight: 800; }
+.day__temp i{
+  font-style: normal;
+  color: rgba(255,255,255,0.5);
+  font-weight: 500;
+}
