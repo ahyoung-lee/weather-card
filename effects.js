@@ -120,7 +120,7 @@ const Effects = (() => {
       seed(W, H){
         return {
           sx: W * 0.78,
-          sy: H * 0.14,
+          sy: H * 0.19,     // 머리말(지역·날짜)을 피해서 아래로
           // 빛줄기마다 길이가 따로 늘었다 줄었다 해야 반짝여 보입니다
           rays: Array.from({ length: 14 }, (_, i) => ({
             base: (i % 2 === 0) ? 0.72 : 0.46,
@@ -138,8 +138,8 @@ const Effects = (() => {
         const sx = s.sx, sy = s.sy;
         const pulse = 0.80 + Math.sin(t * 1.1) * 0.20;
 
-        // 넓게 퍼지는 햇무리
-        softBlob(back, sx, sy, W * 0.62, 'rgba(255,196,92,ALPHA)', 0.30 * pulse);
+        // 넓게 퍼지는 햇무리 — 파란 하늘 위라 노랑보다 흰빛이 맞습니다
+        softBlob(back, sx, sy, W * 0.66, 'rgba(255,250,226,ALPHA)', 0.34 * pulse);
 
         // 천천히 도는 빛줄기
         back.save();
@@ -151,8 +151,8 @@ const Effects = (() => {
           const long = W * ray.base * (0.78 + Math.sin(t * ray.sp + ray.ph) * 0.22);
           back.rotate(TAU / s.rays.length);
           const g = back.createLinearGradient(0, 0, long, 0);
-          g.addColorStop(0, 'rgba(255,214,140,' + (0.16 * pulse) + ')');
-          g.addColorStop(1, 'rgba(255,214,140,0)');
+          g.addColorStop(0, 'rgba(255,244,206,' + (0.26 * pulse) + ')');
+          g.addColorStop(1, 'rgba(255,244,206,0)');
           back.fillStyle = g;
           back.beginPath();
           back.moveTo(0, 0);
@@ -163,11 +163,11 @@ const Effects = (() => {
         }
         back.restore();
 
-        // 해 본체
-        softBlob(back, sx, sy, W * 0.15, 'rgba(255,236,190,ALPHA)', 0.85 * pulse);
-        back.fillStyle = 'rgba(255,248,228,' + (0.92 * pulse) + ')';
+        // 해 본체 — 가운데는 하얗게 타고 둘레만 노랗습니다
+        softBlob(back, sx, sy, W * 0.21, 'rgba(255,240,196,ALPHA)', 0.90 * pulse);
+        back.fillStyle = 'rgba(255,253,246,' + Math.min(1, 0.98 * pulse) + ')';
         back.beginPath();
-        back.arc(sx, sy, W * 0.052, 0, TAU);
+        back.arc(sx, sy, W * 0.060, 0, TAU);
         back.fill();
 
         // 공기 중에 떠다니는 빛 알갱이
@@ -178,7 +178,7 @@ const Effects = (() => {
           if (m.x < -20) m.x = W + 20;
           if (m.x > W + 20) m.x = -20;
 
-          front.fillStyle = 'rgba(255,240,205,' + (0.18 + Math.sin(t * 1.6 + m.ph) * 0.12) + ')';
+          front.fillStyle = 'rgba(255,255,250,' + (0.26 + Math.sin(t * 1.6 + m.ph) * 0.16) + ')';
           front.beginPath();
           front.arc(m.x, m.y, m.r, 0, TAU);
           front.fill();

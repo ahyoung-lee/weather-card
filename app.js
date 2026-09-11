@@ -175,6 +175,8 @@ function applyScene(theme, windSpeed){
    카드는 실제 1080px 크기로 그리되, 화면에서는 가로·세로가
    모두 들어오도록 줄여서 카드 전체가 한눈에 보이게 합니다.
    --------------------------------------------------------- */
+let fitRetries = 0;
+
 function fitPreview(){
   // 정사각인지 쇼츠인지 알려주면 CSS가 알맞은 글자 크기를 씁니다
   card.dataset.size = (cardW === cardH) ? 'square' : 'shorts';
@@ -190,12 +192,22 @@ function fitPreview(){
   // 아래쪽 여백까지 감안해서 빼야 스크롤바가 생기지 않습니다
   const availH = Math.max(window.innerHeight - topOffset - 44, 240);
 
-  // 가로·세로 중 더 빡빡한 쪽에 맞춥니다
-  const scale = Math.min(availW / cardW, availH / cardH);
-
   card.style.width     = cardW + 'px';
   card.style.height    = cardH + 'px';
   Effects.setSize(cardW, cardH);   // 캔버스도 같은 크기로
+
+  // 가로·세로 중 더 빡빡한 쪽에 맞춥니다
+  const scale = Math.min(availW / cardW, availH / cardH);
+
+  // 스타일이 아직 안 붙었거나 미리보기 자리가 잡히기 전이면 폭이 0으로 나옵니다.
+  // 그대로 두면 카드가 0배로 줄어 화면에서 사라지고, 저장도 실패합니다.
+  // 다음 프레임에 다시 재 보되, 계속 0이면 몇 번만 시도하고 멈춥니다.
+  if (!(scale > 0)){
+    if (fitRetries < 10){ fitRetries += 1; requestAnimationFrame(fitPreview); }
+    return;
+  }
+  fitRetries = 0;
+
   card.style.transform = `scale(${scale})`;
 
   stageBox.style.width  = (cardW * scale) + 'px';
@@ -381,6 +393,14 @@ async function makeCard(type){
    --------------------------------------------------------- */
 async function downloadImage(){
   if (!currentType) return;
+
+  // 카드가 화면에서 크기를 갖고 있어야 이미지로 만들 수 있습니다.
+  // 크기가 0이면 html2canvas 가 알 수 없는 오류를 내며 죽습니다.
+  if (!card.getBoundingClientRect().width){
+    setStatus('카드가 아직 화면에 자리를 잡지 못했습니다. 창 크기를 한 번 바꾸거나 새로고침해 주세요.');
+    return;
+  }
+
   setStatus('이미지를 만드는 중입니다...');
 
   // 글꼴이 다 불러와진 다음에 캡처해야 글자가 깨지지 않습니다
