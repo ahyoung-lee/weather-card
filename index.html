@@ -34,7 +34,7 @@
 
     <div class="field">
       <span class="field__label">카드 크기</span>
-      <div class="chips" role="radiogroup" aria-label="카드 크기">
+      <div class="chips" id="sizeChips" role="radiogroup" aria-label="카드 크기">
         <button class="chip is-on" type="button" data-w="1080" data-h="1920">쇼츠 1080 × 1920</button>
         <button class="chip" type="button" data-w="1080" data-h="1080">정사각 1080 × 1080</button>
       </div>
@@ -45,12 +45,20 @@
       <input id="signInput" class="search__input" type="text" value="@alwaysg00d" />
     </div>
 
+    <div class="field">
+      <span class="field__label">저장 형식</span>
+      <div class="chips" id="fmtChips" role="radiogroup" aria-label="저장 형식">
+        <button class="chip is-on" type="button" data-fmt="jpg">JPG</button>
+        <button class="chip" type="button" data-fmt="png">PNG</button>
+      </div>
+    </div>
+
     <div class="actions">
       <button id="todayBtn" class="btn btn--primary" type="button">오늘의 날씨 카드 만들기</button>
       <button id="weekBtn" class="btn" type="button">주간 날씨 카드 만들기</button>
     </div>
 
-    <button id="downloadBtn" class="btn btn--ghost" type="button" disabled>PNG로 저장하기</button>
+    <button id="downloadBtn" class="btn btn--ghost" type="button" disabled>JPG로 저장하기</button>
 
     <p id="status" class="status" role="status">지역을 고르고 위쪽 버튼을 눌러 주세요.</p>
 
@@ -125,6 +133,7 @@
 
 <!-- 화면의 카드(HTML)를 이미지로 바꿔주는 라이브러리 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="effects.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>날씨 카드 — 규칙 검사</title>
+<style>
+  body{ margin:0; padding:32px; background:#0B0D12; color:#E8EAF0;
+        font:15px/1.7 Pretendard, system-ui, sans-serif; }
+  h1{ font-size:20px; margin:0 0 4px; }
+  p.lead{ margin:0 0 24px; color:#8B93A7; font-size:14px; }
+  #summary{ padding:14px 18px; border-radius:12px; font-weight:700; margin-bottom:18px; }
+  .ok{   background:#11301F; color:#7DE2C3; }
+  .bad{  background:#3A1620; color:#FF9AA8; }
+  ul{ list-style:none; margin:0; padding:0; }
+  li{ padding:9px 14px; border-bottom:1px solid #262B37; font-size:14px; }
+  li b{ font-weight:700; }
+  li.pass b{ color:#7DE2C3; }
+  li.fail b{ color:#FF9AA8; }
+  li span{ color:#8B93A7; }
+</style>
+</head>
+<body>
+
+<h1>날씨 효과 규칙 검사</h1>
+<p class="lead">
+  어떤 날씨에 어떤 효과가 나와야 하는지를 확인합니다.
+  이 파일을 브라우저로 열기만 하면 됩니다.
+</p>
+
+<div id="summary">검사하는 중...</div>
+<ul id="list"></ul>
+
+<script src="effects.js"></script>
+<script>
+/* 검사할 경우들: [설명, 날씨테마, 풍속, 기대하는 효과] */
+const CASES = [
+  ['비가 오면 물방울',                      'rain',  1,    'rain'],
+  ['비가 오는데 바람까지 세면 비가 우선',      'rain',  8,    'rain'],
+  ['눈이 오는데 바람까지 세면 눈이 우선',      'snow',  12,   'snow'],
+  ['뇌우는 바람이 세도 뇌우',                'storm', 15,   'storm'],
+  ['안개는 바람이 세도 안개',                'fog',   9,    'fog'],
+
+  ['맑은데 바람이 세면 낙엽',                'clear', 7,    'wind'],
+  ['흐린데 바람이 세면 낙엽',                'cloud', 6.5,  'wind'],
+  ['딱 기준치(6m/s)면 낙엽',                'clear', 6,     'wind'],
+  ['기준에 살짝 못 미치면 그대로 맑음',        'clear', 5.9,  'clear'],
+
+  ['맑고 바람 없으면 햇살',                  'clear', 0,    'clear'],
+  ['흐리고 바람 없으면 구름',                'cloud', 2,    'cloud'],
+
+  ['풍속을 못 받아와도 멀쩡해야 함',          'clear', undefined, 'clear'],
+  ['풍속이 null 이어도 멀쩡해야 함',          'cloud', null, 'cloud'],
+  ['모르는 날씨는 구름으로',                 'wat',   1,    'cloud'],
+];
+
+const list = document.getElementById('list');
+let failed = 0;
+
+for (const [label, theme, wind, want] of CASES){
+  const got = Effects.pickScene(theme, wind);
+  const pass = (got === want);
+  if (!pass) failed++;
+
+  const li = document.createElement('li');
+  li.className = pass ? 'pass' : 'fail';
+  li.innerHTML = `<b>${pass ? '통과' : '실패'}</b> &nbsp; ${label}
+    <span>— ${theme} / 풍속 ${wind}m/s → ${got}${pass ? '' : ` (기대: ${want})`}</span>`;
+  list.appendChild(li);
+}
+
+const sum = document.getElementById('summary');
+sum.className = failed ? 'bad' : 'ok';
+sum.textContent = failed
+  ? `${CASES.length}개 중 ${failed}개 실패`
+  : `${CASES.length}개 모두 통과`;
+</script>
+
+</body>
+</html>

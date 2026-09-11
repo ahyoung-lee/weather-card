@@ -18,6 +18,7 @@ const todayBtn    = $('todayBtn');
 const weekBtn     = $('weekBtn');
 const downloadBtn = $('downloadBtn');
 const statusEl    = $('status');
+const fmtChips    = $('fmtChips');
 const stageBox    = $('stageBox');
 const card        = $('card');
 const viewToday   = $('viewToday');
@@ -30,6 +31,7 @@ let place = { name: '서울', lat: 37.5665, lon: 126.9780 }; // 기본값: 서�
 let cardW = 1080;
 let cardH = 1920;       // 기본은 쇼츠 크기
 let currentType = null; // 'today' 또는 'week'
+let saveFmt     = 'jpg'; // 'jpg' 또는 'png'
 
 /* ---------------------------------------------------------
    2. 날씨 코드 사전
@@ -151,6 +153,24 @@ function adviceLine(feels, pop){
 }
 
 /* ---------------------------------------------------------
+   5-1. 카드에 어떤 날씨 효과를 띄울지 정하기
+   규칙 자체는 effects.js 의 pickScene 이 갖고 있습니다.
+   주소 끝에 #fx=snow 처럼 붙이면 그 효과를 강제로 볼 수 있습니다.
+   (효과를 미리 보거나 확인할 때 씁니다)
+   --------------------------------------------------------- */
+function fxOverride(){
+  const m = location.hash.match(/fx=([a-z]+)/i);
+  const name = m && m[1].toLowerCase();
+  return (name && Effects.names.includes(name)) ? name : null;
+}
+
+function applyScene(theme, windSpeed){
+  const scene = fxOverride() || Effects.pickScene(theme, windSpeed);
+  card.dataset.fx = scene;      // 배경색(data-theme)과 따로 관리합니다
+  Effects.setScene(scene);
+}
+
+/* ---------------------------------------------------------
    6. 미리보기 크기 맞추기
    카드는 실제 1080px 크기로 그리되, 화면에서는 가로·세로가
    모두 들어오도록 줄여서 카드 전체가 한눈에 보이게 합니다.
@@ -175,6 +195,7 @@ function fitPreview(){
 
   card.style.width     = cardW + 'px';
   card.style.height    = cardH + 'px';
+  Effects.setSize(cardW, cardH);   // 캔버스도 같은 크기로
   card.style.transform = `scale(${scale})`;
 
   stageBox.style.width  = (cardW * scale) + 'px';
@@ -263,6 +284,7 @@ function renderToday(data, ti){
   const [label, iconName, theme] = readCode(now.weather_code);
 
   card.dataset.theme = theme;
+  applyScene(theme, now.wind_speed_10m);
 
   $('tPlace').textContent = place.name;
   $('tDate').textContent  = formatDate(day.time[ti]);
@@ -293,8 +315,10 @@ function renderToday(data, ti){
 function renderWeek(data, ti){
   const day = data.daily;
 
-  // 카드 전체 색은 지금 날씨 기준
-  card.dataset.theme = readCode(data.current.weather_code)[2];
+  // 카드 전체 색과 효과는 지금 날씨 기준
+  const theme = readCode(data.current.weather_code)[2];
+  card.dataset.theme = theme;
+  applyScene(theme, data.current.wind_speed_10m);
 
   $('wPlace').textContent = place.name;
   $('wDate').textContent  = `${formatDate(day.time[ti])} 기준`;
@@ -339,7 +363,7 @@ async function makeCard(type){
 
     fitPreview();
     downloadBtn.disabled = false;
-    setStatus('카드가 완성되었습니다. PNG로 저장하기를 눌러 주세요.');
+    setStatus(`카드가 완성되었습니다. ${saveFmt.toUpperCase()}로 저장하기를 눌러 주세요.`);
 
   }catch(err){
     console.error(err);
@@ -350,29 +374,40 @@ async function makeCard(type){
 }
 
 /* ---------------------------------------------------------
-   12. PNG로 저장하기
+   12. 이미지로 저장하기 (JPG 또는 PNG)
    화면에서는 카드가 축소되어 있으므로,
    이미지로 만들 때만 원래 크기(1080px)로 되돌려서 캡처합니다.
+   날씨 효과 캔버스는 보이는 그대로 같이 찍힙니다.
    --------------------------------------------------------- */
-async function downloadPNG(){
+async function downloadImage(){
   if (!currentType) return;
   setStatus('이미지를 만드는 중입니다...');
 
   // 글꼴이 다 불러와진 다음에 캡처해야 글자가 깨지지 않습니다
   if (document.fonts && document.fonts.ready) await document.fonts.ready;
 
+  // 움직임을 멈춰서 흔들리지 않은 한 장을 찍습니다.
+  // 번개가 번쩍이는 순간에 눌러도 카드가 허옇게 나오지 않습니다.
+  Effects.beforeCapture();
+
   try{
+    const isJpg = (saveFmt === 'jpg');
+
     const canvas = await html2canvas(card, {
       width: cardW,
       height: cardH,
       scale: 1,
-      backgroundColor: null,
+      // JPG는 투명을 지원하지 않으므로 바탕을 확실히 채워 둡니다
+      backgroundColor: isJpg ? '#12161F' : null,
       useCORS: true,
       onclone: (doc) => {
-        // 복제본에서만 축소를 풀어 원본 크기로 그립니다
+        // 복제본에서만 축소를 풀어 원본 크기로 그립니다.
+        // position 은 relative 여야 합니다. static 으로 두면 효과 캔버스가
+        // 카드가 아니라 축소된 미리보기 상자를 기준으로 크기를 잡아
+        // 구석에 쪼그라든 채로 찍힙니다.
         const clone = doc.getElementById('card');
         clone.style.transform = 'none';
-        clone.style.position  = 'static';
+        clone.style.position  = 'relative';
         clone.style.borderRadius = '0';
       },
     });
@@ -382,15 +417,17 @@ async function downloadPNG(){
       const name  = currentType === 'today' ? '오늘의날씨' : '주간날씨';
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `${name}_${place.name}_${today}.png`;
+      a.download = `${name}_${place.name}_${today}.${saveFmt}`;
       a.click();
       URL.revokeObjectURL(a.href);
       setStatus('저장했습니다. 다운로드 폴더를 확인해 주세요.');
-    }, 'image/png');
+    }, isJpg ? 'image/jpeg' : 'image/png', 0.92);
 
   }catch(err){
     console.error(err);
     setStatus('이미지 저장에 실패했습니다. 새로고침 후 다시 시도해 주세요.');
+  }finally{
+    Effects.start();   // 저장이 끝나면 다시 움직입니다
   }
 }
 
@@ -402,17 +439,39 @@ cityInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchCity
 
 todayBtn.addEventListener('click', () => makeCard('today'));
 weekBtn.addEventListener('click',  () => makeCard('week'));
-downloadBtn.addEventListener('click', downloadPNG);
+downloadBtn.addEventListener('click', downloadImage);
+
+// 칩 묶음 하나 안에서만 선택이 옮겨가게 해주는 도우미
+function onChipPick(group, handler){
+  group.querySelectorAll('.chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      group.querySelectorAll('.chip').forEach((c) => c.classList.remove('is-on'));
+      chip.classList.add('is-on');
+      handler(chip);
+    });
+  });
+}
 
 // 카드 크기 선택 칩
-document.querySelectorAll('.chip').forEach((chip) => {
-  chip.addEventListener('click', () => {
-    document.querySelectorAll('.chip').forEach((c) => c.classList.remove('is-on'));
-    chip.classList.add('is-on');
-    cardW = Number(chip.dataset.w);
-    cardH = Number(chip.dataset.h);
-    fitPreview();
-  });
+onChipPick($('sizeChips'), (chip) => {
+  cardW = Number(chip.dataset.w);
+  cardH = Number(chip.dataset.h);
+  fitPreview();
+});
+
+// 저장 형식 선택 칩
+onChipPick(fmtChips, (chip) => {
+  saveFmt = chip.dataset.fmt;
+  downloadBtn.textContent = `${saveFmt.toUpperCase()}로 저장하기`;
+});
+
+// 주소의 #fx=... 를 바꾸면 효과가 바로 바뀝니다
+window.addEventListener('hashchange', () => {
+  const name = fxOverride();
+  if (name){
+    card.dataset.fx = name;
+    Effects.setScene(name);
+  }
 });
 
 // 계정명을 바꾸면 카드에도 바로 반영
@@ -422,5 +481,6 @@ signInput.addEventListener('input', () => {
 });
 
 // 페이지가 열리면 서울 날씨로 첫 카드를 자동으로 만들어 줍니다
+Effects.mount(card);
 fitPreview();
 makeCard('today');
