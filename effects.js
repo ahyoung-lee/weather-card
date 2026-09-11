@@ -121,16 +121,22 @@ const Effects = (() => {
         return {
           sx: W * 0.78,
           sy: H * 0.14,
-          motes: Array.from({ length: many(16) }, () => ({
+          // 빛줄기마다 길이가 따로 늘었다 줄었다 해야 반짝여 보입니다
+          rays: Array.from({ length: 14 }, (_, i) => ({
+            base: (i % 2 === 0) ? 0.72 : 0.46,
+            ph: rnd(0, TAU),
+            sp: rnd(1.1, 2.3),
+          })),
+          motes: Array.from({ length: many(22) }, () => ({
             x: rnd(0, W), y: rnd(0, H),
-            r: rnd(2, 6), vy: rnd(-9, -3), vx: rnd(-4, 4),
+            r: rnd(2, 6), vy: rnd(-30, -12), vx: rnd(-12, 12),
             ph: rnd(0, TAU),
           })),
         };
       },
       frame(s, dt, t, back, front, W, H){
         const sx = s.sx, sy = s.sy;
-        const pulse = 0.82 + Math.sin(t * 0.7) * 0.18;
+        const pulse = 0.80 + Math.sin(t * 1.1) * 0.20;
 
         // 넓게 퍼지는 햇무리
         softBlob(back, sx, sy, W * 0.62, 'rgba(255,196,92,ALPHA)', 0.30 * pulse);
@@ -139,10 +145,11 @@ const Effects = (() => {
         back.save();
         back.globalCompositeOperation = 'lighter';
         back.translate(sx, sy);
-        back.rotate(t * 0.05);
-        for (let i = 0; i < 14; i++){
-          const long = (i % 2 === 0) ? W * 0.72 : W * 0.46;
-          back.rotate(TAU / 14);
+        back.rotate(t * 0.22);          // 한 바퀴에 약 29초
+        for (let i = 0; i < s.rays.length; i++){
+          const ray  = s.rays[i];
+          const long = W * ray.base * (0.78 + Math.sin(t * ray.sp + ray.ph) * 0.22);
+          back.rotate(TAU / s.rays.length);
           const g = back.createLinearGradient(0, 0, long, 0);
           g.addColorStop(0, 'rgba(255,214,140,' + (0.16 * pulse) + ')');
           g.addColorStop(1, 'rgba(255,214,140,0)');
@@ -187,7 +194,7 @@ const Effects = (() => {
             x: rnd(-W * 0.2, W * 1.2),
             y: rnd(H * 0.05, H * 0.75),
             r: rnd(W * 0.18, W * 0.42),
-            vx: rnd(6, 26) * (i % 2 ? 1 : -1),
+            vx: rnd(20, 58) * (i % 2 ? 1 : -1),
             a: rnd(0.08, 0.18),
           })),
         };
@@ -217,7 +224,7 @@ const Effects = (() => {
         }));
 
         // 몇 개는 무거워져서 아래로 흘러내립니다
-        const runners = Array.from({ length: many(heavy ? 7 : 5) }, () => ({
+        const runners = Array.from({ length: many(heavy ? 9 : 7) }, () => ({
           x: rnd(W * 0.05, W * 0.95),
           y: rnd(0, H),
           r: rnd(14, 26),
@@ -399,7 +406,7 @@ const Effects = (() => {
             y: rnd(0, H),
             w: rnd(W * 0.5, W * 1.0),
             h: rnd(H * 0.05, H * 0.13),
-            v: rnd(5, 20) * (i % 2 ? 1 : -1),
+            v: rnd(16, 44) * (i % 2 ? 1 : -1),
             a: rnd(0.11, 0.24),
             near: i % 3 === 0,
           })),

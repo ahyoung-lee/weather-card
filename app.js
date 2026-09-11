@@ -480,6 +480,18 @@ signInput.addEventListener('input', () => {
   $('wSign').textContent = signInput.value;
 });
 
+// 운영체제에서 애니메이션을 꺼둔 경우, 카드도 움직이지 않습니다.
+// 왜 안 움직이는지 몰라서 헤매지 않도록 화면에 알려 줍니다.
+if (window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  const hint = $('motionHint');
+  hint.textContent =
+    '컴퓨터에서 "애니메이션 효과"가 꺼져 있어 카드가 움직이지 않습니다. '
+    + '저장되는 이미지는 정상입니다. '
+    + '움직이게 하려면 윈도우 설정 → 접근성 → 시각 효과에서 켜 주세요.';
+  hint.hidden = false;
+}
+
 // 페이지가 열리면 서울 날씨로 첫 카드를 자동으로 만들어 줍니다
 Effects.mount(card);
 fitPreview();

@@ -198,6 +198,14 @@ a{ color: var(--accent); }
   color: var(--ink-dim);
 }
 
+.status--warn{
+  padding: 12px 14px;
+  border: 1px solid #4A3A1E;
+  border-radius: 10px;
+  background: #1C1710;
+  color: #E0B968;
+}
+
 .credit{
   margin-top: 20px;
   padding-top: 16px;
